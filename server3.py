@@ -31,7 +31,6 @@ from datetime import timedelta, datetime
 from random import normalvariate, random
 from socketserver import ThreadingMixIn
 
-import dateutil.parser
 
 ################################################################################
 #
@@ -185,7 +184,7 @@ def route(path):
     """
 
     def _route(f):
-        setattr(f, '__route__', path)
+        setattr(f, '_route_', path)
         return f
 
     return _route
@@ -203,9 +202,9 @@ def read_params(path):
 
 def get(req_handler, routes):
     """ Map a request to the appropriate route of a routes instance. """
-    for name, handler in routes.__class__.__dict__.items():
-        if hasattr(handler, "__route__"):
-            if None != re.search(handler.__route__, req_handler.path):
+    for name, handler in routes._class.dict_.items():
+        if hasattr(handler, "_route_"):
+            if None != re.search(handler._route_, req_handler.path):
                 req_handler.send_response(200)
                 req_handler.send_header('Content-Type', 'application/json')
                 req_handler.send_header('Access-Control-Allow-Origin', '*')
@@ -254,7 +253,7 @@ ops = {
 class App(object):
     """ The trading game server application. """
 
-    def __init__(self):
+    def _init_(self):
         self._book_1 = dict()
         self._book_2 = dict()
         self._data_1 = order_book(read_csv(), self._book_1, 'ABC')
@@ -296,7 +295,7 @@ class App(object):
             t2, bids2, asks2 = next(self._current_book_2)
         except Exception as e:
             print("error getting stocks...reinitalizing app")
-            self.__init__()
+            self._init_()
             t1, bids1, asks1 = next(self._current_book_1)
             t2, bids2, asks2 = next(self._current_book_2)
         t = t1 if t1 > t2 else t2
@@ -333,7 +332,8 @@ class App(object):
 #
 # Main
 
-if __name__ == '__main__':
+if (
+        '__name__' == '_main_'):
     if not os.path.isfile('test.csv'):
         print("No data found, generating...")
         generate_csv()
